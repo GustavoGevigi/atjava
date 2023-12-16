@@ -18,7 +18,7 @@ public class UsuarioService {
                 .map(usuario -> modelMapper.map(usuario, UsuarioDTOOutput.class))
                 .collect(Collectors.toList());
 
-        System.out.println("Listando usuários: " + usuariosDTO);
+        System.out.println("Lista de usuários: " + usuariosDTO);
 
         return usuariosDTO;
     }
@@ -26,7 +26,7 @@ public class UsuarioService {
     public void inserirUsuario(UsuarioDTOInput usuarioDTOInput) {
         Usuario usuario = modelMapper.map(usuarioDTOInput, Usuario.class);
         listaUsuarios.add(usuario);
-        System.out.println("Usuário adicionado: " + usuario);
+        System.out.println("Usuário " + usuario + " adicionado com sucesso! ");
     }
 
     public void alterarUsuario(UsuarioDTOInput usuarioDTOInput) {
@@ -35,7 +35,7 @@ public class UsuarioService {
         for (Usuario usuario : listaUsuarios) {
             if (usuario.getId() == id) {
                 modelMapper.map(usuarioDTOInput, usuario);
-                System.out.println("Usuário alterado: " + usuario);
+                System.out.println("Usuário alterado para: " + usuario);
                 break;
             }
         }

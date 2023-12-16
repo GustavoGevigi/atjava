@@ -8,18 +8,15 @@ public class ServiceTest {
 
     @Test
     public void testInserirUsuario() {
-        // Criar uma instância do serviço
         UsuarioService usuarioService = new UsuarioService();
 
-        // Criar um objeto UsuarioDTOInput para inserção
         UsuarioDTOInput usuarioDTOInput = new UsuarioDTOInput();
-        usuarioDTOInput.setNome("NomeTeste");
-        usuarioDTOInput.setSenha("SenhaTeste");
+        usuarioDTOInput.setId(1);
+        usuarioDTOInput.setNome("Teste1");
+        usuarioDTOInput.setSenha("teste1");
 
-        // Executar o método de inserção
         usuarioService.inserirUsuario(usuarioDTOInput);
 
-        // Validar a inserção verificando o tamanho da lista
         assertEquals(1, usuarioService.listarUsuarios().size());
     }
 }

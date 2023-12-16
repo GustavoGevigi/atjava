@@ -1,9 +1,10 @@
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import DTO.UsuarioDTOInput;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -12,30 +13,47 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class IntegrationTest {
 
     @Test
-    public void testListarUsuarios() throws IOException {
-        String apiUrl = "http://localhost:4567/usuarios";
-
-        URL url = new URL(apiUrl);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
+    public void testInserirUsuario() {
         try {
-            connection.setRequestMethod("GET");
+            URL randomUserApiUrl = new URL("https://randomuser.me/api/");
+            HttpURLConnection randomUserConnection = (HttpURLConnection) randomUserApiUrl.openConnection();
+            randomUserConnection.setRequestMethod("GET");
 
-            int responseCode = connection.getResponseCode();
-            assertEquals(200, responseCode);
+            int randomUserResponseCode = randomUserConnection.getResponseCode();
+            assertEquals(200, randomUserResponseCode);
 
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                StringBuilder response = new StringBuilder();
-                String line;
+            BufferedReader randomUserReader = new BufferedReader(new InputStreamReader(randomUserConnection.getInputStream()));
+            StringBuilder randomUserContent = new StringBuilder();
+            String randomUserInputLine;
 
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
-                }
-
-                System.out.println("Resposta da API: Teste realizado com sucesso! " + response.toString());
+            while ((randomUserInputLine = randomUserReader.readLine()) != null) {
+                randomUserContent.append(randomUserInputLine);
             }
-        } finally {
-            connection.disconnect();
+
+            randomUserReader.close();
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode randomUserJson = objectMapper.readTree(randomUserContent.toString());
+            JsonNode userNode = randomUserJson.at("/results/0");
+
+            URL apiUrl = new URL("http://localhost:4567/usuarios");
+            HttpURLConnection apiConnection = (HttpURLConnection) apiUrl.openConnection();
+            apiConnection.setRequestMethod("POST");
+            apiConnection.setRequestProperty("Content-Type", "application/json");
+            apiConnection.setDoOutput(true);
+
+            UsuarioDTOInput usuarioDTOInput = new UsuarioDTOInput();
+            usuarioDTOInput.setNome(userNode.at("/name/first").asText());
+            usuarioDTOInput.setSenha("senha_aleatoria");
+
+            objectMapper.writeValue(apiConnection.getOutputStream(), usuarioDTOInput);
+
+            int apiResponseCode = apiConnection.getResponseCode();
+            assertEquals(201, apiResponseCode);
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

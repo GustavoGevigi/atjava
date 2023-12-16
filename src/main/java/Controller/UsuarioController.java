@@ -1,8 +1,12 @@
 package Controller;
 
-import DTO.UsuarioDTOInput;
-import Service.UsuarioService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import DTO.UsuarioDTOInput;
+import DTO.UsuarioDTOOutput;
+import Service.UsuarioService;
+
+import java.util.List;
+
 import static spark.Spark.*;
 
 public class UsuarioController {
@@ -12,99 +16,68 @@ public class UsuarioController {
     public UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
         this.objectMapper = new ObjectMapper();
+        initializeRoutes();
     }
 
-    public void respostasRequisicoes() {
-        // Endpoint para listar usuários
+    private void initializeRoutes() {
         get("/usuarios", (req, res) -> {
             res.type("application/json");
 
-            try {
-                var usuarios = usuarioService.listarUsuarios();
-                String json = objectMapper.writeValueAsString(usuarios);
-                res.status(200);
-                return json;
-            } catch (Exception e) {
-                res.status(500);
-                return "Erro ao processar a requisição";
+            List<UsuarioDTOOutput> usuariosDTO = usuarioService.listarUsuarios();
+
+            for (UsuarioDTOOutput usuario : usuariosDTO) {
+                System.out.println("Usuário: " + usuario.getId() + ", Nome: " + usuario.getNome());
             }
+
+            return objectMapper.writeValueAsString(usuariosDTO);
         });
 
         get("/usuarios/:id", (req, res) -> {
             res.type("application/json");
+            int id = Integer.parseInt(req.params(":id"));
+            UsuarioDTOOutput usuarioDTOOutput = usuarioService.buscarUsuario(id);
 
-            try {
-                int id = Integer.parseInt(req.params(":id"));
-                var usuarioOptional = usuarioService.buscarUsuarioPorId(id);
-
-                if (usuarioOptional.isPresent()) {
-                    String json = objectMapper.writeValueAsString(usuarioOptional.get());
-                    res.status(200);
-                    return json;
-                } else {
-                    res.status(404);
-                    return "Usuário não encontrado";
-                }
-            } catch (NumberFormatException e) {
-                res.status(400);
-                return "ID inválido";
-            } catch (Exception e) {
-                res.status(500);
-                return "Erro ao processar a requisição";
+            if (usuarioDTOOutput != null) {
+                return objectMapper.writeValueAsString(usuarioDTOOutput);
+            } else {
+                res.status(404);
+                return "{\"error\": \"Usuário não encontrado para o ID: " + id + "\"}";
             }
         });
 
+
         delete("/usuarios/:id", (req, res) -> {
             res.type("application/json");
-
-            try {
-                int id = Integer.parseInt(req.params(":id"));
-                usuarioService.excluirUsuario(id);
-                res.status(204);
-                return "";
-            } catch (NumberFormatException e) {
-                res.status(400);
-                return "ID inválido";
-            } catch (Exception e) {
-                res.status(500);
-                return "Erro ao processar a requisição";
-            }
+            int id = Integer.parseInt(req.params(":id"));
+            usuarioService.excluirUsuario(id);
+            res.status(204);
+            return "OK 204";
         });
 
         post("/usuarios", (req, res) -> {
             res.type("application/json");
 
-            try {
-                UsuarioDTOInput usuarioDTOInput = objectMapper.readValue(req.body(), UsuarioDTOInput.class);
-                usuarioService.inserirUsuario(usuarioDTOInput);
-                res.status(201);
-                return "Usuário inserido com sucesso";
-            } catch (Exception e) {
-                res.status(500);
-                return "Erro ao processar a requisição";
-            }
+            UsuarioDTOInput usuarioDTOInput = objectMapper.readValue(req.body(), UsuarioDTOInput.class);
+            usuarioService.inserirUsuario(usuarioDTOInput);
+
+            res.status(201);
+            return "Inserido com sucesso.";
         });
 
         put("/usuarios", (req, res) -> {
             res.type("application/json");
 
-            try {
-                UsuarioDTOInput usuarioDTOInput = objectMapper.readValue(req.body(), UsuarioDTOInput.class);
-                usuarioService.alterarUsuario(usuarioDTOInput);
-                res.status(200);
-                return "Usuário atualizado com sucesso";
-            } catch (Exception e) {
-                res.status(500);
-                return "Erro ao processar a requisição";
-            }
+            UsuarioDTOInput usuarioDTOInput = objectMapper.readValue(req.body(), UsuarioDTOInput.class);
+            usuarioService.alterarUsuario(usuarioDTOInput);
+
+            res.status(200);
+            return "Alterado com sucesso.";
         });
+
     }
 
     public static void main(String[] args) {
         UsuarioService usuarioService = new UsuarioService();
         UsuarioController usuarioController = new UsuarioController(usuarioService);
-
-        port(4567);
-        usuarioController.respostasRequisicoes();
     }
 }

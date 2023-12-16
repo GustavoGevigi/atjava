@@ -7,48 +7,55 @@ import org.modelmapper.ModelMapper;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class UsuarioService {
-    private List<Usuario> listaUsuarios;
-    private ModelMapper modelMapper;
-
-    public UsuarioService() {
-        this.listaUsuarios = new ArrayList<>();
-        this.modelMapper = new ModelMapper();
-    }
+    private List<Usuario> listaUsuarios = new ArrayList<>();
+    private ModelMapper modelMapper = new ModelMapper();
 
     public List<UsuarioDTOOutput> listarUsuarios() {
-        return listaUsuarios.stream()
+        List<UsuarioDTOOutput> usuariosDTO = listaUsuarios.stream()
                 .map(usuario -> modelMapper.map(usuario, UsuarioDTOOutput.class))
                 .collect(Collectors.toList());
+
+        System.out.println("Listando usuários: " + usuariosDTO);
+
+        return usuariosDTO;
     }
 
     public void inserirUsuario(UsuarioDTOInput usuarioDTOInput) {
         Usuario usuario = modelMapper.map(usuarioDTOInput, Usuario.class);
         listaUsuarios.add(usuario);
+        System.out.println("Usuário adicionado: " + usuario);
     }
 
     public void alterarUsuario(UsuarioDTOInput usuarioDTOInput) {
-        Usuario usuarioModificado = modelMapper.map(usuarioDTOInput, Usuario.class);
+        int id = usuarioDTOInput.getId();
 
-        Optional<Usuario> usuarioExistente = listaUsuarios.stream()
-                .filter(u -> u.getId() == usuarioModificado.getId())
-                .findFirst();
-
-        usuarioExistente.ifPresent(u -> {
-            u.setNome(usuarioModificado.getNome());
-            u.setSenha(usuarioModificado.getSenha());
-        });
+        for (Usuario usuario : listaUsuarios) {
+            if (usuario.getId() == id) {
+                modelMapper.map(usuarioDTOInput, usuario);
+                System.out.println("Usuário alterado: " + usuario);
+                break;
+            }
+        }
     }
 
-    public Optional<UsuarioDTOOutput> buscarUsuarioPorId(int id) {
-        Optional<Usuario> usuarioExistente = listaUsuarios.stream()
-                .filter(usuario -> usuario.getId() == id)
-                .findFirst();
 
-        return usuarioExistente.map(usuario -> modelMapper.map(usuario, UsuarioDTOOutput.class));
+    public UsuarioDTOOutput buscarUsuario(int id) {
+        Usuario usuario = listaUsuarios.stream()
+                .filter(u -> u.getId() == id)
+                .findFirst()
+                .orElse(null);
+
+        if (usuario != null) {
+            UsuarioDTOOutput usuarioDTO = modelMapper.map(usuario, UsuarioDTOOutput.class);
+            System.out.println("Usuário encontrado: " + usuarioDTO);
+            return usuarioDTO;
+        } else {
+            System.out.println("Usuário não encontrado para o ID: " + id);
+            return null;
+        }
     }
 
     public void excluirUsuario(int id) {
